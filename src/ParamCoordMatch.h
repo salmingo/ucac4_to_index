@@ -1,5 +1,5 @@
 /**
- * @file ParamCoordsMatch.h
+ * @file ParamCoordMatch.h
  * @brief 定义坐标匹配参数及其访问接口
  * @version 0.1
  * @date 2020-11-14
@@ -17,18 +17,18 @@
  * - 不同框架: 图像XY坐标系--WCS世界坐标系一致性匹配
  */
 
-#ifndef _PARAM_COORDS_MATCH_H_
-#define _PARAM_COORDS_MATCH_H_
+#ifndef _PARAM_COORD_MATCH_H_
+#define _PARAM_COORD_MATCH_H_
 
 #include <string>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
 /*!
- * @struct ParamCoordsMatch
+ * @struct ParamCoordMatch
  * @brief 定义坐标匹配参数及其访问接口
  */
-struct ParamCoordsMatch {
+struct ParamCoordMatch {
 	/* 模型构建参数 */
 	/*!
 	 * @brief 世界坐标系像元比例尺下限, 角秒/像元
@@ -45,12 +45,6 @@ struct ParamCoordsMatch {
 	 */
 	int minRange;
 	/*!
-	 * @brief 最大'点-点'距离, 无量纲
-	 * @note
-	 * 坐标系单位距离的倍数
-	 */
-	int maxRange;
-	/*!
 	 * @brief 张角, 角度
 	 */
 	double fieldAngle;
@@ -60,7 +54,7 @@ struct ParamCoordsMatch {
 	 * - 正整数
 	 * - 不含中心和定向参考点
 	 */
-	int minSampleCount;
+	int sampleCount;
 	/*!
 	 * @brief 'X'坐标的列索引. 索引从0开始
 	 */
@@ -133,15 +127,14 @@ public:
 		try {
 			PT::ptree pt;
 
-			pt.add("scale.<xmlattr>.low",   8.0);
-			pt.add("scale.<xmlattr>.high", 11.0);
-			pt.add("range.<xmlattr>.min",  100);
-			pt.add("range.<xmlattr>.max",  200);
-			pt.add("field.<xmlattr>.angle", 60.0);
-			pt.add("sampleCount.<xmlattr>.min", 2);
-			pt.add("colIndex.<xmlattr>.x",    0);
-			pt.add("colIndex.<xmlattr>.y",    1);
-			pt.add("colIndex.<xmlattr>.flux", 2);
+			pt.add("scale.<xmlattr>.low",         8.0);
+			pt.add("scale.<xmlattr>.high",        12.0);
+			pt.add("range.<xmlattr>.min",         100);
+			pt.add("field.<xmlattr>.angle",       60.0);
+			pt.add("sampleCount.<xmlattr>.value", 2);
+			pt.add("colIndex.<xmlattr>.x",        0);
+			pt.add("colIndex.<xmlattr>.y",        1);
+			pt.add("colIndex.<xmlattr>.flux",     2);
 			pt.add("fluxSort.<xmlattr>.descend", false);
 
 			pt.add("catalogue.<xmlattr>.filePath", "");
@@ -157,7 +150,6 @@ public:
 			PT::write_xml(filepath, pt, std::locale(), settings);
 		}
 		catch(PT::xml_parser_error& ex) {
-
 		}
 	}
 
@@ -174,11 +166,10 @@ public:
 			PT::read_xml(filepath, pt, boost::property_tree::xml_parser::trim_whitespace);
 
 			lowScale  = pt.get("scale.<xmlattr>.low",   8.0);
-			highScale = pt.get("scale.<xmlattr>.high", 11.0);
+			highScale = pt.get("scale.<xmlattr>.high", 12.0);
 			minRange  = pt.get("range.<xmlattr>.min",  100);
-			maxRange  = pt.get("range.<xmlattr>.max",  200);
 			fieldAngle = pt.get("field.<xmlattr>.angle", 60.0);
-			minSampleCount = pt.get("sampleCount.<xmlattr>.min", 2);
+			sampleCount = pt.get("sampleCount.<xmlattr>.value", 2);
 			xIndex     = pt.get("colIndex.<xmlattr>.x",    0);
 			yIndex     = pt.get("colIndex.<xmlattr>.y",    1);
 			fluxIndex  = pt.get("colIndex.<xmlattr>.flux", 2);
@@ -186,12 +177,17 @@ public:
 
 			pathCat         = pt.get("catalogue.<xmlattr>.filePath", "");
 			depth           = pt.get("depth", 10);
-			diffUniRangeMax = pt.get("unitary.<xmlattr>.range",      "0.01");
-			diffUniAngleMax = pt.get("unitary.<xmlattr>.angle",      "0.5");
+			diffUniRangeMax = pt.get("unitary.<xmlattr>.range",  "0.01");
+			diffUniAngleMax = pt.get("unitary.<xmlattr>.angle",  "0.5");
 			parity = pt.get("parity", 0);
 
-			outputWcs     = pt.get("wcs.<xmlattr>.output",     "");
-			outputMatched = pt.get("matched.<xmlattr>.output", "");
+			outputWcs     = pt.get("wcs.<xmlattr>.output",     true);
+			outputMatched = pt.get("matched.<xmlattr>.output", true);
+
+			if (lowScale < 0.1)  lowScale = 0.1;
+			if (highScale > 1.5 * lowScale) highScale = 1.5 * lowScale;
+			if (minRange < 50)   minRange = 50;
+			if (sampleCount < 2) sampleCount = 2;
 
 			return true;
 		}
