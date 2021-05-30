@@ -114,9 +114,6 @@ struct ParamCoordMatch {
 	 */
 	bool outputMatched;
 
-protected:
-	namespace PT = boost::property_tree;	///< 声明命名空间
-
 public:
 	/* 接口 */
 	/*!
@@ -124,6 +121,7 @@ public:
 	 * @param filepath  文件路径
 	 */
 	void InitFile(const std::string& filepath) {
+		namespace PT = boost::property_tree;	///< 声明命名空间
 		try {
 			PT::ptree pt;
 
@@ -161,6 +159,7 @@ public:
 	 * false: 加载失败; 生成缺省文件
 	 */
 	bool LoadFile(const std::string& filepath) {
+		namespace PT = boost::property_tree;	///< 声明命名空间
 		try {
 			PT::ptree pt;
 			PT::read_xml(filepath, pt, boost::property_tree::xml_parser::trim_whitespace);
@@ -177,8 +176,8 @@ public:
 
 			pathCat         = pt.get("catalogue.<xmlattr>.filePath", "");
 			depth           = pt.get("depth", 10);
-			diffUniRangeMax = pt.get("unitary.<xmlattr>.range",  "0.01");
-			diffUniAngleMax = pt.get("unitary.<xmlattr>.angle",  "0.5");
+			diffUniRangeMax = pt.get("unitary.<xmlattr>.range",  1);
+			diffUniAngleMax = pt.get("unitary.<xmlattr>.angle",  1);
 			parity = pt.get("parity", 0);
 
 			outputWcs     = pt.get("wcs.<xmlattr>.output",     true);
